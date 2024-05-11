@@ -1,0 +1,88 @@
+SQL> @ C:\SQLfile\Assignment2\task2_a.sql
+
+Table dropped.
+
+
+Table created.
+
+
+Procedure created.
+
+SQL> EXECUTE merge_publication;
+20 of publication have been successfully posted!                                                                                                                                              
+/                                                                                                                                                                                             
+Pubid               Publisher      Year           Title                                                                 Type                                                                                                                                                                                                                                                                
+0029498             Springer       2011           Principles of Distributed Database Systems, Third Edition             Book                                                                  
+/                                                                                                                                                                                             
+Pubid               Year           Title                                                                 Type                                                                                                                                                                                                                                                                               
+ICDE2011            2011           Proc. IEEE 28th International Conference on Data Engineering          Proceedings                                                                          
+ICDE2012            2012           Proc. IEEE 29th International Conference on Data Engineering          Proceedings                                                                          
+CIKM2009            2009           Proc. 18th ACM Conference on Information and Knowledge Management     Proceedings                                                                          
+/                                                                                                                                                                                             
+Pubid               Volume         Number         Year           Title                                                                 Type                                                                                                                                                                                                                                                 
+VLDBJ21_1           21             1              2012           VLDB Journal                                                          Journal                                                
+PVLDB4_8            4              8              2011           Proceedings of the VLDB Endowment                                     Journal                                                
+PVLDB4_11           4              11             2011           Proceedings of the VLDB Endowment                                     Journal                                                
+/                                                                                                                                                                                             
+Pubid               Appear in      Start Page     End Page       Title                                                                 Type                                                                                                                                                                                                                                                 
+MullerTA12          VLDBJ21_1      1              23             Sorting networks on FPGAs                                             Article                                                
+GeorgouK12          VLDBJ21_1      25             50             Distributed similarity estimation using derived dimensions            Article                                                
+DeutchM12           VLDBJ21_1      51             68             Type inference and type checking for queries over execution traces    Article                                                
+CheeZLZL12          VLDBJ21_1      69             95             Continuous reverse k nearest neighbors queries in Euclidean space...  Article                                                
+ZouCOZ12            VLDBJ21_1      97             120            Answering pattern match queries in large graph databases via graph... Article                                                
+HartmaKL12          VLDBJ21_1      121            144            Design by example for SQL table definitions with functional...        Article                                                
+GuravSDB12          VLDBJ21_1      145            165            Which sort orders are interesting                                     Article                                                
+AlucDB12            ICDE2012       402            413            Parametric plan caching using density-based clustering                Article                                                
+Graefe11            ICDE2011       1361           1361           Robust query processing                                               Article                                                
+GraefeK11           ICDE2011       1370           1373           Modern B-tree techniques                                              Article                                                
+ZouMCOZ11           PVLDB4_8       482            493            gStore: Answering SPARQL Queries via Subgraph Matching                Article                                                
+CheVWOO11           PVLDB4_11      702            713            A Framework for Supporting DBMS-like Indexes in the Cloud             Article                                                
+TaoO09a             CIKM2009       1521           1524           Mining frequent itemsets in time-varying data streams                 Article                                                
+/                                                                                                                                                                                             
+PL/SQL procedure successfully completed.
+
+SQL> DELETE FROM journal
+  2  ;
+
+3 rows deleted.
+
+SQL> @ C:\SQLfile\Assignment2\task2_a.sql
+
+Table dropped.
+
+
+Table created.
+
+
+Procedure created.
+
+SQL> EXECUTE merge_publication;
+No details found in journal table.                                                                                                                                                            
+17 of publication have been successfully posted!                                                                                                                                              
+/                                                                                                                                                                                             
+Pubid               Publisher      Year           Title                                                                 Type                                                                                                                                                                                                                                                                
+0029498             Springer       2011           Principles of Distributed Database Systems, Third Edition             Book                                                                  
+/                                                                                                                                                                                             
+Pubid               Year           Title                                                                 Type                                                                                 
+ICDE2011            2011           Proc. IEEE 28th International Conference on Data Engineering          Proceedings                                                                          
+ICDE2012            2012           Proc. IEEE 29th International Conference on Data Engineering          Proceedings                                                                          
+CIKM2009            2009           Proc. 18th ACM Conference on Information and Knowledge Management     Proceedings                                                                          
+/                                                                                                                                                                                             
+Pubid               Appear in      Start Page     End Page       Title                                                                 Type                                                                                                                                                                                                                                                 
+MullerTA12          VLDBJ21_1      1              23             Sorting networks on FPGAs                                             Article                                                
+GeorgouK12          VLDBJ21_1      25             50             Distributed similarity estimation using derived dimensions            Article                                                
+DeutchM12           VLDBJ21_1      51             68             Type inference and type checking for queries over execution traces    Article                                                
+CheeZLZL12          VLDBJ21_1      69             95             Continuous reverse k nearest neighbors queries in Euclidean space...  Article                                                
+ZouCOZ12            VLDBJ21_1      97             120            Answering pattern match queries in large graph databases via graph... Article                                                
+HartmaKL12          VLDBJ21_1      121            144            Design by example for SQL table definitions with functional...        Article                                                
+GuravSDB12          VLDBJ21_1      145            165            Which sort orders are interesting                                     Article                                                
+AlucDB12            ICDE2012       402            413            Parametric plan caching using density-based clustering                Article                                                
+Graefe11            ICDE2011       1361           1361           Robust query processing                                               Article                                                
+GraefeK11           ICDE2011       1370           1373           Modern B-tree techniques                                              Article                                                
+ZouMCOZ11           PVLDB4_8       482            493            gStore: Answering SPARQL Queries via Subgraph Matching                Article                                                
+CheVWOO11           PVLDB4_11      702            713            A Framework for Supporting DBMS-like Indexes in the Cloud             Article                                                
+TaoO09a             CIKM2009       1521           1524           Mining frequent itemsets in time-varying data streams                 Article                                                
+/                                                                                                                                                                                             
+PL/SQL procedure successfully completed.
+
+SQL> SPOOL OFF

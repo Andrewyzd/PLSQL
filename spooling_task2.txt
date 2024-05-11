@@ -1,0 +1,988 @@
+SQL> SET ECHO ON
+SQL> SET FEEDBACK ON
+SQL> SET LINESIZE 100
+SQL> SET PAGESIZE 200
+SQL> SET SERVEROUTPUT ON
+SQL> @ C:\Assignment1SQLFile\task2.sql
+SQL> 	     ACCEPT input_employeeID NUMBER PROMPT 'Enter the employee id: ';
+Enter the employee id: 176
+SQL> 	     ACCEPT input_startDATE DATE PROMPT 'Enter the start date as DD-MON-YY: ';
+Enter the start date as DD-MON-YY: 1-JAN-01
+SQL> 	     ACCEPT input_endDATE DATE PROMPT 'Enter the end date as DD-MON-YY: ';
+Enter the end date as DD-MON-YY: 1-JAN-03
+SQL> 	     ACCEPT input_jobID PROMPT 'Enter the job id: ';
+Enter the job id: ST_CLERK
+SQL> 	     ACCEPT input_departmentID NUMBER PROMPT 'Enter the department id: ';
+Enter the department id: 110
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE add_job_history AS
+  2  
+  3  	     --variable declaration
+  4  	     v_employeeID NUMBER(6) := &input_employeeID;
+  5  	     v_startDATE DATE := '&input_startDATE';
+  6  	     v_endDATE DATE := '&input_endDATE';
+  7  	     v_jobID VARCHAR2(10) := '&input_jobID';
+  8  	     v_departmentID NUMBER(4) := &input_departmentID;
+  9  
+ 10  	     v_idCheck NUMBER(6);
+ 11  	     v_dateCheck DATE;
+ 12  	     v_jodIDCheck VARCHAR2(10);
+ 13  	     v_departmentIDCheck NUMBER(4);
+ 14  
+ 15  	     inHistory BOOLEAN := FALSE;
+ 16  
+ 17  	     --exception declaration
+ 18  	     ex_PREVIOUS_NEXT_DATE EXCEPTION;
+ 19  	     ex_HIRE_START_DATE EXCEPTION;
+ 20  	     ex_START_LESS_END_DATE EXCEPTION;
+ 21  	     ex_JOB_DEPARTMENT EXCEPTION;
+ 22  
+ 23  BEGIN
+ 24  	     --check the existance of the employees' id in both job_history and employees tables
+ 25  
+ 26  	     SELECT count(*) INTO v_idCheck FROM job_history WHERE job_history.employee_id = v_employeeID;
+ 27  
+ 28  	     IF(v_idCheck > 0) THEN
+ 29  		     SELECT MAX(end_date) INTO v_dateCheck FROM job_history WHERE employee_id = v_employeeID;
+ 30  		     IF(v_startDATE <> v_dateCheck + 1) THEN
+ 31  			     DBMS_OUTPUT.PUT_LINE('The employee record has existed and the last end date is ' ||v_dateCheck);
+ 32  			     RAISE ex_PREVIOUS_NEXT_DATE;
+ 33  		     END IF;
+ 34  	     ELSE
+ 35  		     SELECT count(*) INTO v_idCheck FROM employees WHERE employee_id = v_employeeID;
+ 36  		     IF(v_idCheck = 1) THEN
+ 37  			     SELECT hire_date INTO v_dateCheck FROM employees WHERE employee_id = v_employeeID;
+ 38  			     IF(v_startDATE <> v_dateCheck) THEN
+ 39  				     DBMS_OUTPUT.PUT_LINE('The hire date for this employee is '||v_dateCheck);
+ 40  				     RAISE ex_HIRE_START_DATE;
+ 41  			     END IF;
+ 42  		     ELSE
+ 43  			     RAISE NO_DATA_FOUND;
+ 44  		     END IF;
+ 45  	     END IF;
+ 46  
+ 47  	     --check whether the end date is greather than the start date
+ 48  	     IF(v_endDATE < v_startDATE) THEN
+ 49  		     RAISE ex_START_LESS_END_DATE;
+ 50  	     END IF;
+ 51  
+ 52  	     --check for job id and department id
+ 53  	     SELECT job_id, department_id INTO v_jodIDCheck, v_departmentIDCheck FROM employees WHERE employee_id = v_employeeID;
+ 54  	     IF(v_jobID <> v_jodIDCheck OR v_departmentIDCheck <> v_departmentID) THEN
+ 55  		     DBMS_OUTPUT.PUT_LINE('The job id and department id of the employee is ' ||v_jodIDCheck||' and '||v_departmentIDCheck);
+ 56  		     RAISE ex_JOB_DEPARTMENT;
+ 57  	     END IF;
+ 58  
+ 59  	     --Display the details
+ 60  	     DBMS_OUTPUT.PUT_LINE('---Your entered details---');
+ 61  	     DBMS_OUTPUT.PUT_LINE('Employee ID: '|| v_employeeID);
+ 62  	     DBMS_OUTPUT.PUT_LINE('Start Date: '|| v_startDATE);
+ 63  	     DBMS_OUTPUT.PUT_LINE('End Date: '|| v_endDATE);
+ 64  	     DBMS_OUTPUT.PUT_LINE('Job ID: '|| v_jobID);
+ 65  	     DBMS_OUTPUT.PUT_LINE('Department ID: '|| v_departmentID);
+ 66  
+ 67  	     INSERT INTO job_history VALUES(v_employeeID, v_startDATE, v_endDATE, v_jobID, v_departmentID);
+ 68  	     DBMS_OUTPUT.PUT_LINE('RECORD INSERTED SUCCESSFULLY!');
+ 69  
+ 70  EXCEPTION
+ 71  	     WHEN ex_PREVIOUS_NEXT_DATE THEN
+ 72  		     DBMS_OUTPUT.PUT_LINE('The start date entered '||v_startDATE||' must be the next date of the previous end date for existing employee.');
+ 73  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 74  		     ROLLBACK;
+ 75  
+ 76  	     WHEN ex_HIRE_START_DATE THEN
+ 77  		     DBMS_OUTPUT.PUT_LINE('The start date: '||v_startDATE||' must be same as the hire date for new entry employee');
+ 78  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 79  		     ROLLBACK;
+ 80  
+ 81  	     WHEN ex_START_LESS_END_DATE THEN
+ 82  		     DBMS_OUTPUT.PUT_LINE('The end date: ' ||v_endDATE||' cannot be less than the start date: '||v_startDATE);
+ 83  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 84  		     ROLLBACK;
+ 85  
+ 86  	     WHEN ex_JOB_DEPARTMENT THEN
+ 87  		     DBMS_OUTPUT.PUT_LINE('The entered job id ('||v_jobID||') and department id ('||v_departmentID||') must be same as in employees tables');
+ 88  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 89  		     ROLLBACK;
+ 90  
+ 91  	     WHEN NO_DATA_FOUND THEN
+ 92  		     DBMS_OUTPUT.PUT_LINE('The employee id: '|| v_employeeID ||' do not exist!');
+ 93  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 94  		     ROLLBACK;
+ 95  
+ 96  	     WHEN OTHERS THEN
+ 97  		     DBMS_OUTPUT.PUT_LINE('Unable to insert the record!');
+ 98  		     DBMS_OUTPUT.PUT_LINE('ERROR CODE: ' || SQLCODE);
+ 99  		     DBMS_OUTPUT.PUT_LINE('Error Details: ' || SQLERRM);
+100  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+101  		     ROLLBACK;
+102  
+103  END;
+104  /
+old   4: 	v_employeeID NUMBER(6) := &input_employeeID;
+new   4: 	v_employeeID NUMBER(6) :=        176;
+old   5: 	v_startDATE DATE := '&input_startDATE';
+new   5: 	v_startDATE DATE := '1-JAN-01';
+old   6: 	v_endDATE DATE := '&input_endDATE';
+new   6: 	v_endDATE DATE := '1-JAN-03';
+old   7: 	v_jobID VARCHAR2(10) := '&input_jobID';
+new   7: 	v_jobID VARCHAR2(10) := 'ST_CLERK';
+old   8: 	v_departmentID NUMBER(4) := &input_departmentID;
+new   8: 	v_departmentID NUMBER(4) :=        110;
+
+Procedure created.
+
+SQL> EXECUTE
+Usage: EXEC[UTE] statement
+SQL> EXECUTE add_job_history
+The employee record has existed and the last end date is 31-DEC-07                                  
+The start date entered 01-JAN-01 must be the next date of the previous end date for existing        
+employee.                                                                                           
+INSERTION UNSUCCESSFULL!                                                                            
+
+PL/SQL procedure successfully completed.
+
+SQL> @ C:\Assignment1SQLFile\task2.sql
+SQL> 	     ACCEPT input_employeeID NUMBER PROMPT 'Enter the employee id: ';
+Enter the employee id: 176
+SQL> 	     ACCEPT input_startDATE DATE PROMPT 'Enter the start date as DD-MON-YY: ';
+Enter the start date as DD-MON-YY: 1-JAN-08
+SQL> 	     ACCEPT input_endDATE DATE PROMPT 'Enter the end date as DD-MON-YY: ';
+Enter the end date as DD-MON-YY: 2-JAN-03
+SQL> 	     ACCEPT input_jobID PROMPT 'Enter the job id: ';
+Enter the job id: ST_CLERK
+SQL> 	     ACCEPT input_departmentID NUMBER PROMPT 'Enter the department id: ';
+Enter the department id: 110
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE add_job_history AS
+  2  
+  3  	     --variable declaration
+  4  	     v_employeeID NUMBER(6) := &input_employeeID;
+  5  	     v_startDATE DATE := '&input_startDATE';
+  6  	     v_endDATE DATE := '&input_endDATE';
+  7  	     v_jobID VARCHAR2(10) := '&input_jobID';
+  8  	     v_departmentID NUMBER(4) := &input_departmentID;
+  9  
+ 10  	     v_idCheck NUMBER(6);
+ 11  	     v_dateCheck DATE;
+ 12  	     v_jodIDCheck VARCHAR2(10);
+ 13  	     v_departmentIDCheck NUMBER(4);
+ 14  
+ 15  	     inHistory BOOLEAN := FALSE;
+ 16  
+ 17  	     --exception declaration
+ 18  	     ex_PREVIOUS_NEXT_DATE EXCEPTION;
+ 19  	     ex_HIRE_START_DATE EXCEPTION;
+ 20  	     ex_START_LESS_END_DATE EXCEPTION;
+ 21  	     ex_JOB_DEPARTMENT EXCEPTION;
+ 22  
+ 23  BEGIN
+ 24  	     --check the existance of the employees' id in both job_history and employees tables
+ 25  
+ 26  	     SELECT count(*) INTO v_idCheck FROM job_history WHERE job_history.employee_id = v_employeeID;
+ 27  
+ 28  	     IF(v_idCheck > 0) THEN
+ 29  		     SELECT MAX(end_date) INTO v_dateCheck FROM job_history WHERE employee_id = v_employeeID;
+ 30  		     IF(v_startDATE <> v_dateCheck + 1) THEN
+ 31  			     DBMS_OUTPUT.PUT_LINE('The employee record has existed and the last end date is ' ||v_dateCheck);
+ 32  			     RAISE ex_PREVIOUS_NEXT_DATE;
+ 33  		     END IF;
+ 34  	     ELSE
+ 35  		     SELECT count(*) INTO v_idCheck FROM employees WHERE employee_id = v_employeeID;
+ 36  		     IF(v_idCheck = 1) THEN
+ 37  			     SELECT hire_date INTO v_dateCheck FROM employees WHERE employee_id = v_employeeID;
+ 38  			     IF(v_startDATE <> v_dateCheck) THEN
+ 39  				     DBMS_OUTPUT.PUT_LINE('The hire date for this employee is '||v_dateCheck);
+ 40  				     RAISE ex_HIRE_START_DATE;
+ 41  			     END IF;
+ 42  		     ELSE
+ 43  			     RAISE NO_DATA_FOUND;
+ 44  		     END IF;
+ 45  	     END IF;
+ 46  
+ 47  	     --check whether the end date is greather than the start date
+ 48  	     IF(v_endDATE < v_startDATE) THEN
+ 49  		     RAISE ex_START_LESS_END_DATE;
+ 50  	     END IF;
+ 51  
+ 52  	     --check for job id and department id
+ 53  	     SELECT job_id, department_id INTO v_jodIDCheck, v_departmentIDCheck FROM employees WHERE employee_id = v_employeeID;
+ 54  	     IF(v_jobID <> v_jodIDCheck OR v_departmentIDCheck <> v_departmentID) THEN
+ 55  		     DBMS_OUTPUT.PUT_LINE('The job id and department id of the employee is ' ||v_jodIDCheck||' and '||v_departmentIDCheck);
+ 56  		     RAISE ex_JOB_DEPARTMENT;
+ 57  	     END IF;
+ 58  
+ 59  	     --Display the details
+ 60  	     DBMS_OUTPUT.PUT_LINE('---Your entered details---');
+ 61  	     DBMS_OUTPUT.PUT_LINE('Employee ID: '|| v_employeeID);
+ 62  	     DBMS_OUTPUT.PUT_LINE('Start Date: '|| v_startDATE);
+ 63  	     DBMS_OUTPUT.PUT_LINE('End Date: '|| v_endDATE);
+ 64  	     DBMS_OUTPUT.PUT_LINE('Job ID: '|| v_jobID);
+ 65  	     DBMS_OUTPUT.PUT_LINE('Department ID: '|| v_departmentID);
+ 66  
+ 67  	     INSERT INTO job_history VALUES(v_employeeID, v_startDATE, v_endDATE, v_jobID, v_departmentID);
+ 68  	     DBMS_OUTPUT.PUT_LINE('RECORD INSERTED SUCCESSFULLY!');
+ 69  
+ 70  EXCEPTION
+ 71  	     WHEN ex_PREVIOUS_NEXT_DATE THEN
+ 72  		     DBMS_OUTPUT.PUT_LINE('The start date entered '||v_startDATE||' must be the next date of the previous end date for existing employee.');
+ 73  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 74  		     ROLLBACK;
+ 75  
+ 76  	     WHEN ex_HIRE_START_DATE THEN
+ 77  		     DBMS_OUTPUT.PUT_LINE('The start date: '||v_startDATE||' must be same as the hire date for new entry employee');
+ 78  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 79  		     ROLLBACK;
+ 80  
+ 81  	     WHEN ex_START_LESS_END_DATE THEN
+ 82  		     DBMS_OUTPUT.PUT_LINE('The end date: ' ||v_endDATE||' cannot be less than the start date: '||v_startDATE);
+ 83  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 84  		     ROLLBACK;
+ 85  
+ 86  	     WHEN ex_JOB_DEPARTMENT THEN
+ 87  		     DBMS_OUTPUT.PUT_LINE('The entered job id ('||v_jobID||') and department id ('||v_departmentID||') must be same as in employees tables');
+ 88  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 89  		     ROLLBACK;
+ 90  
+ 91  	     WHEN NO_DATA_FOUND THEN
+ 92  		     DBMS_OUTPUT.PUT_LINE('The employee id: '|| v_employeeID ||' do not exist!');
+ 93  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 94  		     ROLLBACK;
+ 95  
+ 96  	     WHEN OTHERS THEN
+ 97  		     DBMS_OUTPUT.PUT_LINE('Unable to insert the record!');
+ 98  		     DBMS_OUTPUT.PUT_LINE('ERROR CODE: ' || SQLCODE);
+ 99  		     DBMS_OUTPUT.PUT_LINE('Error Details: ' || SQLERRM);
+100  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+101  		     ROLLBACK;
+102  
+103  END;
+104  /
+old   4: 	v_employeeID NUMBER(6) := &input_employeeID;
+new   4: 	v_employeeID NUMBER(6) :=        176;
+old   5: 	v_startDATE DATE := '&input_startDATE';
+new   5: 	v_startDATE DATE := '1-JAN-08';
+old   6: 	v_endDATE DATE := '&input_endDATE';
+new   6: 	v_endDATE DATE := '2-JAN-03';
+old   7: 	v_jobID VARCHAR2(10) := '&input_jobID';
+new   7: 	v_jobID VARCHAR2(10) := 'ST_CLERK';
+old   8: 	v_departmentID NUMBER(4) := &input_departmentID;
+new   8: 	v_departmentID NUMBER(4) :=        110;
+
+Procedure created.
+
+SQL> EXECUTE add_job_history
+The end date: 02-JAN-03 cannot be less than the start date: 01-JAN-08                               
+INSERTION UNSUCCESSFULL!                                                                            
+
+PL/SQL procedure successfully completed.
+
+SQL> @ C:\Assignment1SQLFile\task2.sql
+SQL> 	     ACCEPT input_employeeID NUMBER PROMPT 'Enter the employee id: ';
+Enter the employee id: 176
+SQL> 	     ACCEPT input_startDATE DATE PROMPT 'Enter the start date as DD-MON-YY: ';
+Enter the start date as DD-MON-YY: 01-JAN-08
+SQL> 	     ACCEPT input_endDATE DATE PROMPT 'Enter the end date as DD-MON-YY: ';
+Enter the end date as DD-MON-YY: 31-DEC-10
+SQL> 	     ACCEPT input_jobID PROMPT 'Enter the job id: ';
+Enter the job id: ST_CLERK
+SQL> 	     ACCEPT input_departmentID NUMBER PROMPT 'Enter the department id: ';
+Enter the department id: 110
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE add_job_history AS
+  2  
+  3  	     --variable declaration
+  4  	     v_employeeID NUMBER(6) := &input_employeeID;
+  5  	     v_startDATE DATE := '&input_startDATE';
+  6  	     v_endDATE DATE := '&input_endDATE';
+  7  	     v_jobID VARCHAR2(10) := '&input_jobID';
+  8  	     v_departmentID NUMBER(4) := &input_departmentID;
+  9  
+ 10  	     v_idCheck NUMBER(6);
+ 11  	     v_dateCheck DATE;
+ 12  	     v_jodIDCheck VARCHAR2(10);
+ 13  	     v_departmentIDCheck NUMBER(4);
+ 14  
+ 15  	     inHistory BOOLEAN := FALSE;
+ 16  
+ 17  	     --exception declaration
+ 18  	     ex_PREVIOUS_NEXT_DATE EXCEPTION;
+ 19  	     ex_HIRE_START_DATE EXCEPTION;
+ 20  	     ex_START_LESS_END_DATE EXCEPTION;
+ 21  	     ex_JOB_DEPARTMENT EXCEPTION;
+ 22  
+ 23  BEGIN
+ 24  	     --check the existance of the employees' id in both job_history and employees tables
+ 25  
+ 26  	     SELECT count(*) INTO v_idCheck FROM job_history WHERE job_history.employee_id = v_employeeID;
+ 27  
+ 28  	     IF(v_idCheck > 0) THEN
+ 29  		     SELECT MAX(end_date) INTO v_dateCheck FROM job_history WHERE employee_id = v_employeeID;
+ 30  		     IF(v_startDATE <> v_dateCheck + 1) THEN
+ 31  			     DBMS_OUTPUT.PUT_LINE('The employee record has existed and the last end date is ' ||v_dateCheck);
+ 32  			     RAISE ex_PREVIOUS_NEXT_DATE;
+ 33  		     END IF;
+ 34  	     ELSE
+ 35  		     SELECT count(*) INTO v_idCheck FROM employees WHERE employee_id = v_employeeID;
+ 36  		     IF(v_idCheck = 1) THEN
+ 37  			     SELECT hire_date INTO v_dateCheck FROM employees WHERE employee_id = v_employeeID;
+ 38  			     IF(v_startDATE <> v_dateCheck) THEN
+ 39  				     DBMS_OUTPUT.PUT_LINE('The hire date for this employee is '||v_dateCheck);
+ 40  				     RAISE ex_HIRE_START_DATE;
+ 41  			     END IF;
+ 42  		     ELSE
+ 43  			     RAISE NO_DATA_FOUND;
+ 44  		     END IF;
+ 45  	     END IF;
+ 46  
+ 47  	     --check whether the end date is greather than the start date
+ 48  	     IF(v_endDATE < v_startDATE) THEN
+ 49  		     RAISE ex_START_LESS_END_DATE;
+ 50  	     END IF;
+ 51  
+ 52  	     --check for job id and department id
+ 53  	     SELECT job_id, department_id INTO v_jodIDCheck, v_departmentIDCheck FROM employees WHERE employee_id = v_employeeID;
+ 54  	     IF(v_jobID <> v_jodIDCheck OR v_departmentIDCheck <> v_departmentID) THEN
+ 55  		     DBMS_OUTPUT.PUT_LINE('The job id and department id of the employee is ' ||v_jodIDCheck||' and '||v_departmentIDCheck);
+ 56  		     RAISE ex_JOB_DEPARTMENT;
+ 57  	     END IF;
+ 58  
+ 59  	     --Display the details
+ 60  	     DBMS_OUTPUT.PUT_LINE('---Your entered details---');
+ 61  	     DBMS_OUTPUT.PUT_LINE('Employee ID: '|| v_employeeID);
+ 62  	     DBMS_OUTPUT.PUT_LINE('Start Date: '|| v_startDATE);
+ 63  	     DBMS_OUTPUT.PUT_LINE('End Date: '|| v_endDATE);
+ 64  	     DBMS_OUTPUT.PUT_LINE('Job ID: '|| v_jobID);
+ 65  	     DBMS_OUTPUT.PUT_LINE('Department ID: '|| v_departmentID);
+ 66  
+ 67  	     INSERT INTO job_history VALUES(v_employeeID, v_startDATE, v_endDATE, v_jobID, v_departmentID);
+ 68  	     DBMS_OUTPUT.PUT_LINE('RECORD INSERTED SUCCESSFULLY!');
+ 69  
+ 70  EXCEPTION
+ 71  	     WHEN ex_PREVIOUS_NEXT_DATE THEN
+ 72  		     DBMS_OUTPUT.PUT_LINE('The start date entered '||v_startDATE||' must be the next date of the previous end date for existing employee.');
+ 73  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 74  		     ROLLBACK;
+ 75  
+ 76  	     WHEN ex_HIRE_START_DATE THEN
+ 77  		     DBMS_OUTPUT.PUT_LINE('The start date: '||v_startDATE||' must be same as the hire date for new entry employee');
+ 78  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 79  		     ROLLBACK;
+ 80  
+ 81  	     WHEN ex_START_LESS_END_DATE THEN
+ 82  		     DBMS_OUTPUT.PUT_LINE('The end date: ' ||v_endDATE||' cannot be less than the start date: '||v_startDATE);
+ 83  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 84  		     ROLLBACK;
+ 85  
+ 86  	     WHEN ex_JOB_DEPARTMENT THEN
+ 87  		     DBMS_OUTPUT.PUT_LINE('The entered job id ('||v_jobID||') and department id ('||v_departmentID||') must be same as in employees tables');
+ 88  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 89  		     ROLLBACK;
+ 90  
+ 91  	     WHEN NO_DATA_FOUND THEN
+ 92  		     DBMS_OUTPUT.PUT_LINE('The employee id: '|| v_employeeID ||' do not exist!');
+ 93  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 94  		     ROLLBACK;
+ 95  
+ 96  	     WHEN OTHERS THEN
+ 97  		     DBMS_OUTPUT.PUT_LINE('Unable to insert the record!');
+ 98  		     DBMS_OUTPUT.PUT_LINE('ERROR CODE: ' || SQLCODE);
+ 99  		     DBMS_OUTPUT.PUT_LINE('Error Details: ' || SQLERRM);
+100  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+101  		     ROLLBACK;
+102  
+103  END;
+104  /
+old   4: 	v_employeeID NUMBER(6) := &input_employeeID;
+new   4: 	v_employeeID NUMBER(6) :=        176;
+old   5: 	v_startDATE DATE := '&input_startDATE';
+new   5: 	v_startDATE DATE := '01-JAN-08';
+old   6: 	v_endDATE DATE := '&input_endDATE';
+new   6: 	v_endDATE DATE := '31-DEC-10';
+old   7: 	v_jobID VARCHAR2(10) := '&input_jobID';
+new   7: 	v_jobID VARCHAR2(10) := 'ST_CLERK';
+old   8: 	v_departmentID NUMBER(4) := &input_departmentID;
+new   8: 	v_departmentID NUMBER(4) :=        110;
+
+Procedure created.
+
+SQL> EXECUTE add_job_history
+The job id and department id of the employee is SA_REP and 80                                       
+The entered job id (ST_CLERK) and department id (110) must be same as in employees tables           
+INSERTION UNSUCCESSFULL!                                                                            
+
+PL/SQL procedure successfully completed.
+
+SQL> @ C:\Assignment1SQLFile\task2.sql
+SQL> 	     ACCEPT input_employeeID NUMBER PROMPT 'Enter the employee id: ';
+Enter the employee id: 176
+SQL> 	     ACCEPT input_startDATE DATE PROMPT 'Enter the start date as DD-MON-YY: ';
+Enter the start date as DD-MON-YY: 01-JAN-08
+SQL> 	     ACCEPT input_endDATE DATE PROMPT 'Enter the end date as DD-MON-YY: ';
+Enter the end date as DD-MON-YY: 31-DEC-10
+SQL> 	     ACCEPT input_jobID PROMPT 'Enter the job id: ';
+Enter the job id: SA_REP
+SQL> 	     ACCEPT input_departmentID NUMBER PROMPT 'Enter the department id: ';
+Enter the department id: 80
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE add_job_history AS
+  2  
+  3  	     --variable declaration
+  4  	     v_employeeID NUMBER(6) := &input_employeeID;
+  5  	     v_startDATE DATE := '&input_startDATE';
+  6  	     v_endDATE DATE := '&input_endDATE';
+  7  	     v_jobID VARCHAR2(10) := '&input_jobID';
+  8  	     v_departmentID NUMBER(4) := &input_departmentID;
+  9  
+ 10  	     v_idCheck NUMBER(6);
+ 11  	     v_dateCheck DATE;
+ 12  	     v_jodIDCheck VARCHAR2(10);
+ 13  	     v_departmentIDCheck NUMBER(4);
+ 14  
+ 15  	     inHistory BOOLEAN := FALSE;
+ 16  
+ 17  	     --exception declaration
+ 18  	     ex_PREVIOUS_NEXT_DATE EXCEPTION;
+ 19  	     ex_HIRE_START_DATE EXCEPTION;
+ 20  	     ex_START_LESS_END_DATE EXCEPTION;
+ 21  	     ex_JOB_DEPARTMENT EXCEPTION;
+ 22  
+ 23  BEGIN
+ 24  	     --check the existance of the employees' id in both job_history and employees tables
+ 25  
+ 26  	     SELECT count(*) INTO v_idCheck FROM job_history WHERE job_history.employee_id = v_employeeID;
+ 27  
+ 28  	     IF(v_idCheck > 0) THEN
+ 29  		     SELECT MAX(end_date) INTO v_dateCheck FROM job_history WHERE employee_id = v_employeeID;
+ 30  		     IF(v_startDATE <> v_dateCheck + 1) THEN
+ 31  			     DBMS_OUTPUT.PUT_LINE('The employee record has existed and the last end date is ' ||v_dateCheck);
+ 32  			     RAISE ex_PREVIOUS_NEXT_DATE;
+ 33  		     END IF;
+ 34  	     ELSE
+ 35  		     SELECT count(*) INTO v_idCheck FROM employees WHERE employee_id = v_employeeID;
+ 36  		     IF(v_idCheck = 1) THEN
+ 37  			     SELECT hire_date INTO v_dateCheck FROM employees WHERE employee_id = v_employeeID;
+ 38  			     IF(v_startDATE <> v_dateCheck) THEN
+ 39  				     DBMS_OUTPUT.PUT_LINE('The hire date for this employee is '||v_dateCheck);
+ 40  				     RAISE ex_HIRE_START_DATE;
+ 41  			     END IF;
+ 42  		     ELSE
+ 43  			     RAISE NO_DATA_FOUND;
+ 44  		     END IF;
+ 45  	     END IF;
+ 46  
+ 47  	     --check whether the end date is greather than the start date
+ 48  	     IF(v_endDATE < v_startDATE) THEN
+ 49  		     RAISE ex_START_LESS_END_DATE;
+ 50  	     END IF;
+ 51  
+ 52  	     --check for job id and department id
+ 53  	     SELECT job_id, department_id INTO v_jodIDCheck, v_departmentIDCheck FROM employees WHERE employee_id = v_employeeID;
+ 54  	     IF(v_jobID <> v_jodIDCheck OR v_departmentIDCheck <> v_departmentID) THEN
+ 55  		     DBMS_OUTPUT.PUT_LINE('The job id and department id of the employee is ' ||v_jodIDCheck||' and '||v_departmentIDCheck);
+ 56  		     RAISE ex_JOB_DEPARTMENT;
+ 57  	     END IF;
+ 58  
+ 59  	     --Display the details
+ 60  	     DBMS_OUTPUT.PUT_LINE('---Your entered details---');
+ 61  	     DBMS_OUTPUT.PUT_LINE('Employee ID: '|| v_employeeID);
+ 62  	     DBMS_OUTPUT.PUT_LINE('Start Date: '|| v_startDATE);
+ 63  	     DBMS_OUTPUT.PUT_LINE('End Date: '|| v_endDATE);
+ 64  	     DBMS_OUTPUT.PUT_LINE('Job ID: '|| v_jobID);
+ 65  	     DBMS_OUTPUT.PUT_LINE('Department ID: '|| v_departmentID);
+ 66  
+ 67  	     INSERT INTO job_history VALUES(v_employeeID, v_startDATE, v_endDATE, v_jobID, v_departmentID);
+ 68  	     DBMS_OUTPUT.PUT_LINE('RECORD INSERTED SUCCESSFULLY!');
+ 69  
+ 70  EXCEPTION
+ 71  	     WHEN ex_PREVIOUS_NEXT_DATE THEN
+ 72  		     DBMS_OUTPUT.PUT_LINE('The start date entered '||v_startDATE||' must be the next date of the previous end date for existing employee.');
+ 73  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 74  		     ROLLBACK;
+ 75  
+ 76  	     WHEN ex_HIRE_START_DATE THEN
+ 77  		     DBMS_OUTPUT.PUT_LINE('The start date: '||v_startDATE||' must be same as the hire date for new entry employee');
+ 78  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 79  		     ROLLBACK;
+ 80  
+ 81  	     WHEN ex_START_LESS_END_DATE THEN
+ 82  		     DBMS_OUTPUT.PUT_LINE('The end date: ' ||v_endDATE||' cannot be less than the start date: '||v_startDATE);
+ 83  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 84  		     ROLLBACK;
+ 85  
+ 86  	     WHEN ex_JOB_DEPARTMENT THEN
+ 87  		     DBMS_OUTPUT.PUT_LINE('The entered job id ('||v_jobID||') and department id ('||v_departmentID||') must be same as in employees tables');
+ 88  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 89  		     ROLLBACK;
+ 90  
+ 91  	     WHEN NO_DATA_FOUND THEN
+ 92  		     DBMS_OUTPUT.PUT_LINE('The employee id: '|| v_employeeID ||' do not exist!');
+ 93  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 94  		     ROLLBACK;
+ 95  
+ 96  	     WHEN OTHERS THEN
+ 97  		     DBMS_OUTPUT.PUT_LINE('Unable to insert the record!');
+ 98  		     DBMS_OUTPUT.PUT_LINE('ERROR CODE: ' || SQLCODE);
+ 99  		     DBMS_OUTPUT.PUT_LINE('Error Details: ' || SQLERRM);
+100  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+101  		     ROLLBACK;
+102  
+103  END;
+104  /
+old   4: 	v_employeeID NUMBER(6) := &input_employeeID;
+new   4: 	v_employeeID NUMBER(6) :=        176;
+old   5: 	v_startDATE DATE := '&input_startDATE';
+new   5: 	v_startDATE DATE := '01-JAN-08';
+old   6: 	v_endDATE DATE := '&input_endDATE';
+new   6: 	v_endDATE DATE := '31-DEC-10';
+old   7: 	v_jobID VARCHAR2(10) := '&input_jobID';
+new   7: 	v_jobID VARCHAR2(10) := 'SA_REP';
+old   8: 	v_departmentID NUMBER(4) := &input_departmentID;
+new   8: 	v_departmentID NUMBER(4) :=         80;
+
+Procedure created.
+
+SQL> EXECUTE add_job_history
+---Your entered details---                                                                          
+Employee ID: 176                                                                                    
+Start Date: 01-JAN-08                                                                               
+End Date: 31-DEC-10                                                                                 
+Job ID: SA_REP                                                                                      
+Department ID: 80                                                                                   
+RECORD INSERTED SUCCESSFULLY!                                                                       
+
+PL/SQL procedure successfully completed.
+
+SQL> @ C:\Assignment1SQLFile\task2.sql
+SQL> 	     ACCEPT input_employeeID NUMBER PROMPT 'Enter the employee id: ';
+Enter the employee id: 151
+SQL> 	     ACCEPT input_startDATE DATE PROMPT 'Enter the start date as DD-MON-YY: ';
+Enter the start date as DD-MON-YY: 01-JAN-02
+SQL> 	     ACCEPT input_endDATE DATE PROMPT 'Enter the end date as DD-MON-YY: ';
+Enter the end date as DD-MON-YY: 31-DEC-09
+SQL> 	     ACCEPT input_jobID PROMPT 'Enter the job id: ';
+Enter the job id: ST_CLERK
+SQL> 	     ACCEPT input_departmentID NUMBER PROMPT 'Enter the department id: ';
+Enter the department id: 12
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE add_job_history AS
+  2  
+  3  	     --variable declaration
+  4  	     v_employeeID NUMBER(6) := &input_employeeID;
+  5  	     v_startDATE DATE := '&input_startDATE';
+  6  	     v_endDATE DATE := '&input_endDATE';
+  7  	     v_jobID VARCHAR2(10) := '&input_jobID';
+  8  	     v_departmentID NUMBER(4) := &input_departmentID;
+  9  
+ 10  	     v_idCheck NUMBER(6);
+ 11  	     v_dateCheck DATE;
+ 12  	     v_jodIDCheck VARCHAR2(10);
+ 13  	     v_departmentIDCheck NUMBER(4);
+ 14  
+ 15  	     inHistory BOOLEAN := FALSE;
+ 16  
+ 17  	     --exception declaration
+ 18  	     ex_PREVIOUS_NEXT_DATE EXCEPTION;
+ 19  	     ex_HIRE_START_DATE EXCEPTION;
+ 20  	     ex_START_LESS_END_DATE EXCEPTION;
+ 21  	     ex_JOB_DEPARTMENT EXCEPTION;
+ 22  
+ 23  BEGIN
+ 24  	     --check the existance of the employees' id in both job_history and employees tables
+ 25  
+ 26  	     SELECT count(*) INTO v_idCheck FROM job_history WHERE job_history.employee_id = v_employeeID;
+ 27  
+ 28  	     IF(v_idCheck > 0) THEN
+ 29  		     SELECT MAX(end_date) INTO v_dateCheck FROM job_history WHERE employee_id = v_employeeID;
+ 30  		     IF(v_startDATE <> v_dateCheck + 1) THEN
+ 31  			     DBMS_OUTPUT.PUT_LINE('The employee record has existed and the last end date is ' ||v_dateCheck);
+ 32  			     RAISE ex_PREVIOUS_NEXT_DATE;
+ 33  		     END IF;
+ 34  	     ELSE
+ 35  		     SELECT count(*) INTO v_idCheck FROM employees WHERE employee_id = v_employeeID;
+ 36  		     IF(v_idCheck = 1) THEN
+ 37  			     SELECT hire_date INTO v_dateCheck FROM employees WHERE employee_id = v_employeeID;
+ 38  			     IF(v_startDATE <> v_dateCheck) THEN
+ 39  				     DBMS_OUTPUT.PUT_LINE('The hire date for this employee is '||v_dateCheck);
+ 40  				     RAISE ex_HIRE_START_DATE;
+ 41  			     END IF;
+ 42  		     ELSE
+ 43  			     RAISE NO_DATA_FOUND;
+ 44  		     END IF;
+ 45  	     END IF;
+ 46  
+ 47  	     --check whether the end date is greather than the start date
+ 48  	     IF(v_endDATE < v_startDATE) THEN
+ 49  		     RAISE ex_START_LESS_END_DATE;
+ 50  	     END IF;
+ 51  
+ 52  	     --check for job id and department id
+ 53  	     SELECT job_id, department_id INTO v_jodIDCheck, v_departmentIDCheck FROM employees WHERE employee_id = v_employeeID;
+ 54  	     IF(v_jobID <> v_jodIDCheck OR v_departmentIDCheck <> v_departmentID) THEN
+ 55  		     DBMS_OUTPUT.PUT_LINE('The job id and department id of the employee is ' ||v_jodIDCheck||' and '||v_departmentIDCheck);
+ 56  		     RAISE ex_JOB_DEPARTMENT;
+ 57  	     END IF;
+ 58  
+ 59  	     --Display the details
+ 60  	     DBMS_OUTPUT.PUT_LINE('---Your entered details---');
+ 61  	     DBMS_OUTPUT.PUT_LINE('Employee ID: '|| v_employeeID);
+ 62  	     DBMS_OUTPUT.PUT_LINE('Start Date: '|| v_startDATE);
+ 63  	     DBMS_OUTPUT.PUT_LINE('End Date: '|| v_endDATE);
+ 64  	     DBMS_OUTPUT.PUT_LINE('Job ID: '|| v_jobID);
+ 65  	     DBMS_OUTPUT.PUT_LINE('Department ID: '|| v_departmentID);
+ 66  
+ 67  	     INSERT INTO job_history VALUES(v_employeeID, v_startDATE, v_endDATE, v_jobID, v_departmentID);
+ 68  	     DBMS_OUTPUT.PUT_LINE('RECORD INSERTED SUCCESSFULLY!');
+ 69  
+ 70  EXCEPTION
+ 71  	     WHEN ex_PREVIOUS_NEXT_DATE THEN
+ 72  		     DBMS_OUTPUT.PUT_LINE('The start date entered '||v_startDATE||' must be the next date of the previous end date for existing employee.');
+ 73  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 74  		     ROLLBACK;
+ 75  
+ 76  	     WHEN ex_HIRE_START_DATE THEN
+ 77  		     DBMS_OUTPUT.PUT_LINE('The start date: '||v_startDATE||' must be same as the hire date for new entry employee');
+ 78  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 79  		     ROLLBACK;
+ 80  
+ 81  	     WHEN ex_START_LESS_END_DATE THEN
+ 82  		     DBMS_OUTPUT.PUT_LINE('The end date: ' ||v_endDATE||' cannot be less than the start date: '||v_startDATE);
+ 83  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 84  		     ROLLBACK;
+ 85  
+ 86  	     WHEN ex_JOB_DEPARTMENT THEN
+ 87  		     DBMS_OUTPUT.PUT_LINE('The entered job id ('||v_jobID||') and department id ('||v_departmentID||') must be same as in employees tables');
+ 88  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 89  		     ROLLBACK;
+ 90  
+ 91  	     WHEN NO_DATA_FOUND THEN
+ 92  		     DBMS_OUTPUT.PUT_LINE('The employee id: '|| v_employeeID ||' do not exist!');
+ 93  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 94  		     ROLLBACK;
+ 95  
+ 96  	     WHEN OTHERS THEN
+ 97  		     DBMS_OUTPUT.PUT_LINE('Unable to insert the record!');
+ 98  		     DBMS_OUTPUT.PUT_LINE('ERROR CODE: ' || SQLCODE);
+ 99  		     DBMS_OUTPUT.PUT_LINE('Error Details: ' || SQLERRM);
+100  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+101  		     ROLLBACK;
+102  
+103  END;
+104  /
+old   4: 	v_employeeID NUMBER(6) := &input_employeeID;
+new   4: 	v_employeeID NUMBER(6) :=        151;
+old   5: 	v_startDATE DATE := '&input_startDATE';
+new   5: 	v_startDATE DATE := '01-JAN-02';
+old   6: 	v_endDATE DATE := '&input_endDATE';
+new   6: 	v_endDATE DATE := '31-DEC-09';
+old   7: 	v_jobID VARCHAR2(10) := '&input_jobID';
+new   7: 	v_jobID VARCHAR2(10) := 'ST_CLERK';
+old   8: 	v_departmentID NUMBER(4) := &input_departmentID;
+new   8: 	v_departmentID NUMBER(4) :=         12;
+
+Procedure created.
+
+SQL> EXECUTE add_job_history
+The hire date for this employee is 24-MAR-05                                                        
+The start date: 01-JAN-02 must be same as the hire date for new entry employee                      
+INSERTION UNSUCCESSFULL!                                                                            
+
+PL/SQL procedure successfully completed.
+
+SQL> @ C:\Assignment1SQLFile\task2.sql
+SQL> 	     ACCEPT input_employeeID NUMBER PROMPT 'Enter the employee id: ';
+Enter the employee id: 151
+SQL> 	     ACCEPT input_startDATE DATE PROMPT 'Enter the start date as DD-MON-YY: ';
+Enter the start date as DD-MON-YY: 24-MAR-05
+SQL> 	     ACCEPT input_endDATE DATE PROMPT 'Enter the end date as DD-MON-YY: ';
+Enter the end date as DD-MON-YY: 31-DEC-10
+SQL> 	     ACCEPT input_jobID PROMPT 'Enter the job id: ';
+Enter the job id: ST_CLERK
+SQL> 	     ACCEPT input_departmentID NUMBER PROMPT 'Enter the department id: ';
+Enter the department id: 12
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE add_job_history AS
+  2  
+  3  	     --variable declaration
+  4  	     v_employeeID NUMBER(6) := &input_employeeID;
+  5  	     v_startDATE DATE := '&input_startDATE';
+  6  	     v_endDATE DATE := '&input_endDATE';
+  7  	     v_jobID VARCHAR2(10) := '&input_jobID';
+  8  	     v_departmentID NUMBER(4) := &input_departmentID;
+  9  
+ 10  	     v_idCheck NUMBER(6);
+ 11  	     v_dateCheck DATE;
+ 12  	     v_jodIDCheck VARCHAR2(10);
+ 13  	     v_departmentIDCheck NUMBER(4);
+ 14  
+ 15  	     inHistory BOOLEAN := FALSE;
+ 16  
+ 17  	     --exception declaration
+ 18  	     ex_PREVIOUS_NEXT_DATE EXCEPTION;
+ 19  	     ex_HIRE_START_DATE EXCEPTION;
+ 20  	     ex_START_LESS_END_DATE EXCEPTION;
+ 21  	     ex_JOB_DEPARTMENT EXCEPTION;
+ 22  
+ 23  BEGIN
+ 24  	     --check the existance of the employees' id in both job_history and employees tables
+ 25  
+ 26  	     SELECT count(*) INTO v_idCheck FROM job_history WHERE job_history.employee_id = v_employeeID;
+ 27  
+ 28  	     IF(v_idCheck > 0) THEN
+ 29  		     SELECT MAX(end_date) INTO v_dateCheck FROM job_history WHERE employee_id = v_employeeID;
+ 30  		     IF(v_startDATE <> v_dateCheck + 1) THEN
+ 31  			     DBMS_OUTPUT.PUT_LINE('The employee record has existed and the last end date is ' ||v_dateCheck);
+ 32  			     RAISE ex_PREVIOUS_NEXT_DATE;
+ 33  		     END IF;
+ 34  	     ELSE
+ 35  		     SELECT count(*) INTO v_idCheck FROM employees WHERE employee_id = v_employeeID;
+ 36  		     IF(v_idCheck = 1) THEN
+ 37  			     SELECT hire_date INTO v_dateCheck FROM employees WHERE employee_id = v_employeeID;
+ 38  			     IF(v_startDATE <> v_dateCheck) THEN
+ 39  				     DBMS_OUTPUT.PUT_LINE('The hire date for this employee is '||v_dateCheck);
+ 40  				     RAISE ex_HIRE_START_DATE;
+ 41  			     END IF;
+ 42  		     ELSE
+ 43  			     RAISE NO_DATA_FOUND;
+ 44  		     END IF;
+ 45  	     END IF;
+ 46  
+ 47  	     --check whether the end date is greather than the start date
+ 48  	     IF(v_endDATE < v_startDATE) THEN
+ 49  		     RAISE ex_START_LESS_END_DATE;
+ 50  	     END IF;
+ 51  
+ 52  	     --check for job id and department id
+ 53  	     SELECT job_id, department_id INTO v_jodIDCheck, v_departmentIDCheck FROM employees WHERE employee_id = v_employeeID;
+ 54  	     IF(v_jobID <> v_jodIDCheck OR v_departmentIDCheck <> v_departmentID) THEN
+ 55  		     DBMS_OUTPUT.PUT_LINE('The job id and department id of the employee is ' ||v_jodIDCheck||' and '||v_departmentIDCheck);
+ 56  		     RAISE ex_JOB_DEPARTMENT;
+ 57  	     END IF;
+ 58  
+ 59  	     --Display the details
+ 60  	     DBMS_OUTPUT.PUT_LINE('---Your entered details---');
+ 61  	     DBMS_OUTPUT.PUT_LINE('Employee ID: '|| v_employeeID);
+ 62  	     DBMS_OUTPUT.PUT_LINE('Start Date: '|| v_startDATE);
+ 63  	     DBMS_OUTPUT.PUT_LINE('End Date: '|| v_endDATE);
+ 64  	     DBMS_OUTPUT.PUT_LINE('Job ID: '|| v_jobID);
+ 65  	     DBMS_OUTPUT.PUT_LINE('Department ID: '|| v_departmentID);
+ 66  
+ 67  	     INSERT INTO job_history VALUES(v_employeeID, v_startDATE, v_endDATE, v_jobID, v_departmentID);
+ 68  	     DBMS_OUTPUT.PUT_LINE('RECORD INSERTED SUCCESSFULLY!');
+ 69  
+ 70  EXCEPTION
+ 71  	     WHEN ex_PREVIOUS_NEXT_DATE THEN
+ 72  		     DBMS_OUTPUT.PUT_LINE('The start date entered '||v_startDATE||' must be the next date of the previous end date for existing employee.');
+ 73  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 74  		     ROLLBACK;
+ 75  
+ 76  	     WHEN ex_HIRE_START_DATE THEN
+ 77  		     DBMS_OUTPUT.PUT_LINE('The start date: '||v_startDATE||' must be same as the hire date for new entry employee');
+ 78  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 79  		     ROLLBACK;
+ 80  
+ 81  	     WHEN ex_START_LESS_END_DATE THEN
+ 82  		     DBMS_OUTPUT.PUT_LINE('The end date: ' ||v_endDATE||' cannot be less than the start date: '||v_startDATE);
+ 83  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 84  		     ROLLBACK;
+ 85  
+ 86  	     WHEN ex_JOB_DEPARTMENT THEN
+ 87  		     DBMS_OUTPUT.PUT_LINE('The entered job id ('||v_jobID||') and department id ('||v_departmentID||') must be same as in employees tables');
+ 88  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 89  		     ROLLBACK;
+ 90  
+ 91  	     WHEN NO_DATA_FOUND THEN
+ 92  		     DBMS_OUTPUT.PUT_LINE('The employee id: '|| v_employeeID ||' do not exist!');
+ 93  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 94  		     ROLLBACK;
+ 95  
+ 96  	     WHEN OTHERS THEN
+ 97  		     DBMS_OUTPUT.PUT_LINE('Unable to insert the record!');
+ 98  		     DBMS_OUTPUT.PUT_LINE('ERROR CODE: ' || SQLCODE);
+ 99  		     DBMS_OUTPUT.PUT_LINE('Error Details: ' || SQLERRM);
+100  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+101  		     ROLLBACK;
+102  
+103  END;
+104  /
+old   4: 	v_employeeID NUMBER(6) := &input_employeeID;
+new   4: 	v_employeeID NUMBER(6) :=        151;
+old   5: 	v_startDATE DATE := '&input_startDATE';
+new   5: 	v_startDATE DATE := '24-MAR-05';
+old   6: 	v_endDATE DATE := '&input_endDATE';
+new   6: 	v_endDATE DATE := '31-DEC-10';
+old   7: 	v_jobID VARCHAR2(10) := '&input_jobID';
+new   7: 	v_jobID VARCHAR2(10) := 'ST_CLERK';
+old   8: 	v_departmentID NUMBER(4) := &input_departmentID;
+new   8: 	v_departmentID NUMBER(4) :=         12;
+
+Procedure created.
+
+SQL> EXECUTE add_job_history
+The job id and department id of the employee is SA_REP and 80                                       
+The entered job id (ST_CLERK) and department id (12) must be same as in employees tables            
+INSERTION UNSUCCESSFULL!                                                                            
+
+PL/SQL procedure successfully completed.
+
+SQL> @ C:\Assignment1SQLFile\task2.sql
+SQL> 	     ACCEPT input_employeeID NUMBER PROMPT 'Enter the employee id: ';
+Enter the employee id: 151
+SQL> 	     ACCEPT input_startDATE DATE PROMPT 'Enter the start date as DD-MON-YY: ';
+Enter the start date as DD-MON-YY: 24-MAR-05
+SQL> 	     ACCEPT input_endDATE DATE PROMPT 'Enter the end date as DD-MON-YY: ';
+Enter the end date as DD-MON-YY: 31-DEC-10
+SQL> 	     ACCEPT input_jobID PROMPT 'Enter the job id: ';
+Enter the job id: SA_REP
+SQL> 	     ACCEPT input_departmentID NUMBER PROMPT 'Enter the department id: ';
+Enter the department id: 80
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE add_job_history AS
+  2  
+  3  	     --variable declaration
+  4  	     v_employeeID NUMBER(6) := &input_employeeID;
+  5  	     v_startDATE DATE := '&input_startDATE';
+  6  	     v_endDATE DATE := '&input_endDATE';
+  7  	     v_jobID VARCHAR2(10) := '&input_jobID';
+  8  	     v_departmentID NUMBER(4) := &input_departmentID;
+  9  
+ 10  	     v_idCheck NUMBER(6);
+ 11  	     v_dateCheck DATE;
+ 12  	     v_jodIDCheck VARCHAR2(10);
+ 13  	     v_departmentIDCheck NUMBER(4);
+ 14  
+ 15  	     inHistory BOOLEAN := FALSE;
+ 16  
+ 17  	     --exception declaration
+ 18  	     ex_PREVIOUS_NEXT_DATE EXCEPTION;
+ 19  	     ex_HIRE_START_DATE EXCEPTION;
+ 20  	     ex_START_LESS_END_DATE EXCEPTION;
+ 21  	     ex_JOB_DEPARTMENT EXCEPTION;
+ 22  
+ 23  BEGIN
+ 24  	     --check the existance of the employees' id in both job_history and employees tables
+ 25  
+ 26  	     SELECT count(*) INTO v_idCheck FROM job_history WHERE job_history.employee_id = v_employeeID;
+ 27  
+ 28  	     IF(v_idCheck > 0) THEN
+ 29  		     SELECT MAX(end_date) INTO v_dateCheck FROM job_history WHERE employee_id = v_employeeID;
+ 30  		     IF(v_startDATE <> v_dateCheck + 1) THEN
+ 31  			     DBMS_OUTPUT.PUT_LINE('The employee record has existed and the last end date is ' ||v_dateCheck);
+ 32  			     RAISE ex_PREVIOUS_NEXT_DATE;
+ 33  		     END IF;
+ 34  	     ELSE
+ 35  		     SELECT count(*) INTO v_idCheck FROM employees WHERE employee_id = v_employeeID;
+ 36  		     IF(v_idCheck = 1) THEN
+ 37  			     SELECT hire_date INTO v_dateCheck FROM employees WHERE employee_id = v_employeeID;
+ 38  			     IF(v_startDATE <> v_dateCheck) THEN
+ 39  				     DBMS_OUTPUT.PUT_LINE('The hire date for this employee is '||v_dateCheck);
+ 40  				     RAISE ex_HIRE_START_DATE;
+ 41  			     END IF;
+ 42  		     ELSE
+ 43  			     RAISE NO_DATA_FOUND;
+ 44  		     END IF;
+ 45  	     END IF;
+ 46  
+ 47  	     --check whether the end date is greather than the start date
+ 48  	     IF(v_endDATE < v_startDATE) THEN
+ 49  		     RAISE ex_START_LESS_END_DATE;
+ 50  	     END IF;
+ 51  
+ 52  	     --check for job id and department id
+ 53  	     SELECT job_id, department_id INTO v_jodIDCheck, v_departmentIDCheck FROM employees WHERE employee_id = v_employeeID;
+ 54  	     IF(v_jobID <> v_jodIDCheck OR v_departmentIDCheck <> v_departmentID) THEN
+ 55  		     DBMS_OUTPUT.PUT_LINE('The job id and department id of the employee is ' ||v_jodIDCheck||' and '||v_departmentIDCheck);
+ 56  		     RAISE ex_JOB_DEPARTMENT;
+ 57  	     END IF;
+ 58  
+ 59  	     --Display the details
+ 60  	     DBMS_OUTPUT.PUT_LINE('---Your entered details---');
+ 61  	     DBMS_OUTPUT.PUT_LINE('Employee ID: '|| v_employeeID);
+ 62  	     DBMS_OUTPUT.PUT_LINE('Start Date: '|| v_startDATE);
+ 63  	     DBMS_OUTPUT.PUT_LINE('End Date: '|| v_endDATE);
+ 64  	     DBMS_OUTPUT.PUT_LINE('Job ID: '|| v_jobID);
+ 65  	     DBMS_OUTPUT.PUT_LINE('Department ID: '|| v_departmentID);
+ 66  
+ 67  	     INSERT INTO job_history VALUES(v_employeeID, v_startDATE, v_endDATE, v_jobID, v_departmentID);
+ 68  	     DBMS_OUTPUT.PUT_LINE('RECORD INSERTED SUCCESSFULLY!');
+ 69  
+ 70  EXCEPTION
+ 71  	     WHEN ex_PREVIOUS_NEXT_DATE THEN
+ 72  		     DBMS_OUTPUT.PUT_LINE('The start date entered '||v_startDATE||' must be the next date of the previous end date for existing employee.');
+ 73  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 74  		     ROLLBACK;
+ 75  
+ 76  	     WHEN ex_HIRE_START_DATE THEN
+ 77  		     DBMS_OUTPUT.PUT_LINE('The start date: '||v_startDATE||' must be same as the hire date for new entry employee');
+ 78  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 79  		     ROLLBACK;
+ 80  
+ 81  	     WHEN ex_START_LESS_END_DATE THEN
+ 82  		     DBMS_OUTPUT.PUT_LINE('The end date: ' ||v_endDATE||' cannot be less than the start date: '||v_startDATE);
+ 83  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 84  		     ROLLBACK;
+ 85  
+ 86  	     WHEN ex_JOB_DEPARTMENT THEN
+ 87  		     DBMS_OUTPUT.PUT_LINE('The entered job id ('||v_jobID||') and department id ('||v_departmentID||') must be same as in employees tables');
+ 88  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 89  		     ROLLBACK;
+ 90  
+ 91  	     WHEN NO_DATA_FOUND THEN
+ 92  		     DBMS_OUTPUT.PUT_LINE('The employee id: '|| v_employeeID ||' do not exist!');
+ 93  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+ 94  		     ROLLBACK;
+ 95  
+ 96  	     WHEN OTHERS THEN
+ 97  		     DBMS_OUTPUT.PUT_LINE('Unable to insert the record!');
+ 98  		     DBMS_OUTPUT.PUT_LINE('ERROR CODE: ' || SQLCODE);
+ 99  		     DBMS_OUTPUT.PUT_LINE('Error Details: ' || SQLERRM);
+100  		     DBMS_OUTPUT.PUT_LINE('INSERTION UNSUCCESSFULL!');
+101  		     ROLLBACK;
+102  
+103  END;
+104  /
+old   4: 	v_employeeID NUMBER(6) := &input_employeeID;
+new   4: 	v_employeeID NUMBER(6) :=        151;
+old   5: 	v_startDATE DATE := '&input_startDATE';
+new   5: 	v_startDATE DATE := '24-MAR-05';
+old   6: 	v_endDATE DATE := '&input_endDATE';
+new   6: 	v_endDATE DATE := '31-DEC-10';
+old   7: 	v_jobID VARCHAR2(10) := '&input_jobID';
+new   7: 	v_jobID VARCHAR2(10) := 'SA_REP';
+old   8: 	v_departmentID NUMBER(4) := &input_departmentID;
+new   8: 	v_departmentID NUMBER(4) :=         80;
+
+Procedure created.
+
+SQL> EXECUTE add_job_history
+---Your entered details---                                                                          
+Employee ID: 151                                                                                    
+Start Date: 24-MAR-05                                                                               
+End Date: 31-DEC-10                                                                                 
+Job ID: SA_REP                                                                                      
+Department ID: 80                                                                                   
+RECORD INSERTED SUCCESSFULLY!                                                                       
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM job_history
+  2  ;
+
+EMPLOYEE_ID START_DAT END_DATE  JOB_ID     DEPARTMENT_ID                                            
+----------- --------- --------- ---------- -------------                                            
+        102 13-JAN-01 24-JUL-06 IT_PROG               60                                            
+        101 21-SEP-97 27-OCT-01 AC_ACCOUNT           110                                            
+        101 28-OCT-01 15-MAR-05 AC_MGR               110                                            
+        201 17-FEB-04 19-DEC-07 MK_REP                20                                            
+        114 24-MAR-06 31-DEC-07 ST_CLERK              50                                            
+        122 01-JAN-07 31-DEC-07 ST_CLERK              50                                            
+        200 17-SEP-95 17-JUN-01 AD_ASST               90                                            
+        176 24-MAR-06 31-DEC-06 SA_REP                80                                            
+        176 01-JAN-07 31-DEC-07 SA_MAN                80                                            
+        200 01-JUL-02 31-DEC-06 AC_ACCOUNT            90                                            
+        176 01-JAN-08 31-DEC-10 SA_REP                80                                            
+        151 24-MAR-05 31-DEC-10 SA_REP                80                                            
+
+12 rows selected.
+
+SQL> SPOOL OFF

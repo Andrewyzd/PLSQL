@@ -1,0 +1,72 @@
+SQL> SET ECHO ON
+SQL> SET FEEDBACK ON
+SQL> SET LINESIZE 300
+SQL> SET PAGESIZE 200
+SQL> @ C:\Assignment1SQLFile\task1_a.sql
+SQL> SELECT employee_id, UPPER(first_name ||' '||last_name) AS NAME, hire_date, TO_CHAR(SYSDATE, 'DD-MM-RRRR') AS TODAY, TRUNC((SYSDATE - hire_date)/365.25) AS "WORKING YEARS", department_name, job_title, REPLACE(TO_CHAR(salary,'999999990.00'),' ', '*') AS SALARY
+  2  FROM employees JOIN departments ON (employees.department_id = departments.department_id) JOIN jobs ON (employees.job_id = jobs.job_id)
+  3  WHERE TRUNC((SYSDATE - hire_date)/365.25) < '&working_experience'
+  4  AND departments.department_name = '&department_name'
+  5  AND salary >'&salary'
+  6  AND jobs.job_id = '&job_id';
+Enter value for working_experience: 15
+old   3: WHERE TRUNC((SYSDATE - hire_date)/365.25) < '&working_experience'
+new   3: WHERE TRUNC((SYSDATE - hire_date)/365.25) < '15'
+Enter value for department_name: Shipping
+old   4: AND departments.department_name = '&department_name'
+new   4: AND departments.department_name = 'Shipping'
+Enter value for salary: 3000
+old   5: AND salary >'&salary'
+new   5: AND salary >'3000'
+Enter value for job_id: ST_CLERK
+old   6: AND jobs.job_id = '&job_id'
+new   6: AND jobs.job_id = 'ST_CLERK'
+
+EMPLOYEE_ID NAME                                           HIRE_DATE TODAY      WORKING YEARS DEPARTMENT_NAME                JOB_TITLE                           SALARY                                                                                                                                     
+----------- ---------------------------------------------- --------- ---------- ------------- ------------------------------ ----------------------------------- -------------                                                                                                                              
+        125 JULIA NAYER                                    16-JUL-05 20-02-2020            14 Shipping                       Stock Clerk                         ******3200.00                                                                                                                              
+        129 LAURA BISSOT                                   20-AUG-05 20-02-2020            14 Shipping                       Stock Clerk                         ******3300.00                                                                                                                              
+        138 STEPHEN STILES                                 26-OCT-05 20-02-2020            14 Shipping                       Stock Clerk                         ******3200.00                                                                                                                              
+
+3 rows selected.
+
+SQL> @ C:\Assignment1SQLFile\task1_b.sql '12' 'UK'
+SQL> SELECT employee_id, first_name, hire_date, department_name, salary, TRUNC((SYSDATE - hire_date)/365.25) AS "WORKING YEARS' EXPERIENCE",
+  2  CASE WHEN employee_id IN (SELECT DISTINCT(manager_id) FROM employees WHERE manager_id IS NOT NULL) THEN '			Y'
+  3  ELSE '		     N'
+  4  END AS "Managerial Position",
+  5  DECODE(SIGN(TRUNC((SYSDATE - hire_date)/365.25)-14), 1, '15 Years Rewards','NULL') REMARKS
+  6  FROM employees JOIN departments ON (employees.department_id = departments.department_id) JOIN locations ON (departments.location_id = locations.location_id)
+  7  WHERE TRUNC((SYSDATE - hire_date)/365.25)> '&1' AND locations.country_id= '&2'
+  8  AND employee_id NOT IN (SELECT DISTINCT(employee_id) FROM job_history);
+old   7: WHERE TRUNC((SYSDATE - hire_date)/365.25)> '&1' AND locations.country_id= '&2'
+new   7: WHERE TRUNC((SYSDATE - hire_date)/365.25)> '12' AND locations.country_id= 'UK'
+
+EMPLOYEE_ID FIRST_NAME           HIRE_DATE DEPARTMENT_NAME                    SALARY WORKING YEARS' EXPERIENCE Managerial Position REMARKS                                                                                                                                                                  
+----------- -------------------- --------- ------------------------------ ---------- ------------------------- ------------------- ----------------                                                                                                                                                         
+        162 Clara                11-NOV-05 Sales                               10500                        14                   N NULL                                                                                                                                                                     
+        151 David                24-MAR-05 Sales                                9500                        14                   N NULL                                                                                                                                                                     
+        154 Nanette              09-DEC-06 Sales                                7500                        13                   N NULL                                                                                                                                                                     
+        146 Karen                05-JAN-05 Sales                               13500                        15                   Y 15 Years Rewards                                                                                                                                                         
+        203 Susan                07-JUN-02 Human Resources                      6500                        17                   N 15 Years Rewards                                                                                                                                                         
+        160 Louise               15-DEC-05 Sales                                7500                        14                   N NULL                                                                                                                                                                     
+        150 Peter                30-JAN-05 Sales                               10000                        15                   N 15 Years Rewards                                                                                                                                                         
+        168 Lisa                 11-MAR-05 Sales                               11500                        14                   N NULL                                                                                                                                                                     
+        152 Peter                20-AUG-05 Sales                                9000                        14                   N NULL                                                                                                                                                                     
+        170 Tayler               24-JAN-06 Sales                                9600                        14                   N NULL                                                                                                                                                                     
+        175 Alyssa               19-MAR-05 Sales                                8800                        14                   N NULL                                                                                                                                                                     
+        153 Christopher          30-MAR-06 Sales                                8000                        13                   N NULL                                                                                                                                                                     
+        161 Sarath               03-NOV-06 Sales                                7000                        13                   N NULL                                                                                                                                                                     
+        177 Jack                 23-APR-06 Sales                                8400                        13                   N NULL                                                                                                                                                                     
+        145 John                 01-OCT-04 Sales                               14000                        15                   Y 15 Years Rewards                                                                                                                                                         
+        174 Ellen                11-MAY-04 Sales                               11000                        15                   N 15 Years Rewards                                                                                                                                                         
+        157 Patrick              04-MAR-04 Sales                                9500                        15                   N 15 Years Rewards                                                                                                                                                         
+        156 Janette              30-JAN-04 Sales                               10000                        16                   N 15 Years Rewards                                                                                                                                                         
+        147 Alberto              10-MAR-05 Sales                               12000                        14                   Y NULL                                                                                                                                                                     
+        158 Allan                01-AUG-04 Sales                                9000                        15                   N 15 Years Rewards                                                                                                                                                         
+        159 Lindsey              10-MAR-05 Sales                                8000                        14                   N NULL                                                                                                                                                                     
+        169 Harrison             23-MAR-06 Sales                               10000                        13                   N NULL                                                                                                                                                                     
+
+22 rows selected.
+
+SQL> SPOOL OFF

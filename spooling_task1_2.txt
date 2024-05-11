@@ -1,0 +1,97 @@
+SQL> SET SERVEROUTPUT ON
+SQL> @ C:\SQLfile\Assignment2\task1.sql
+
+Procedure created.
+
+SQL> EXECUTE print_publication('M._Tamer_Ozsu');
+================================                                                                                                                                                              
+Pubid: TaoO09a                                                                                                                                                                                
+Type: {Article}                                                                                                                                                                               
+Author: M._Tamer_Ozsu, Yingying_Tao,                                                                                                                                                          
+Title: Mining frequent itemsets in time-varying data streams                                                                                                                                  
+Appear in proceedings: CIKM2009                                                                                                                                                               
+Start Page: 1521                                                                                                                                                                              
+End Page: 1524                                                                                                                                                                                
+Year: 2009                                                                                                                                                                                    
+================================                              
+Pubid: ZouMCOZ11                                                                                                                                                                              
+Type: {Article}                                                                                                                                                                               
+Author: Dongyan_Zhao, Jinghui_Mo, Lei_Chen, Lei_Zou, M._Tamer_Ozsu,                                                                                                                           
+Title: gStore: Answering SPARQL Queries via Subgraph Matching                                                                                                                                 
+Appear in journal: PVLDB4_8                                                                                                                                                                   
+Volume: 4                                                                                                                                                                                     
+Number: 8                                                                                                                                                                                     
+Start Page: 482                                                                                                                                                                               
+End Page: 493                                                                                                                                                                                 
+Year: 2011                                                                                                                                                                                    
+================================ 
+Pubid: CheVWOO11  
+Type: {Article}                                                                                                                                                                               
+Author: Ben_Chin_Ooi, Gang_Chen, Hoang_Tam_Vo, M._Tamer_Ozsu, Sai_Wu,                                                                                                                         
+Title: A Framework for Supporting DBMS-like Indexes in the Cloud                                                                                                                              
+Appear in journal: PVLDB4_11                                                                                                                                                                  
+Volume: 4                                                                                                                                                                                     
+Number: 11                                                                                                                               
+Start Page: 702  
+End Page: 713                      
+Year: 2011
+================================                  
+Pubid: 0029498                                
+Type: {Book}  
+Author: M._Tamer_Ozsu, Patrick_Valduriez,
+Title: Principles of Distributed Database Systems, Third Edition                                                                      
+Publisher: Springer                                     
+Year: 2011        
+================================                      
+Pubid: ZouCOZ12                                
+Type: {Article}
+Author: Dongyan_Zhao, Lei_Chen, Lei_Zou, M._Tamer_Ozsu,
+Title: Answering pattern match queries in large graph databases via graph...               
+Appear in journal: VLDBJ21_1                                                 
+Volume: 21                                       
+Number: 1                                   
+Start Page: 97                                   
+End Page: 120                                      
+Year: 2012                 
+================================  
+Summary of publication:             
+Proceedings : 0                                      
+Journal : 0                                     
+Article : 4                                        
+Book : 1                        
+Total Publication : 5                                                                                                                                                                         
+PL/SQL procedure successfully completed.
+
+SQL> EXECUTE print_publication('Goetz_Graefe');
+================================                           
+Pubid: Graefe11                                   
+Type: {Article}                            
+Author: Goetz_Graefe,                   
+Title: Robust query processing                 
+Appear in proceedings: ICDE2011                              
+Start Page: 1361                                 
+End Page: 1361                                       
+Year: 2011                 
+================================                                
+Pubid: GraefeK11                                 
+Type: {Article}             
+Author: Goetz_Graefe, Harumi_A._Kuno,                  
+Title: Modern B-tree techniques                  
+Appear in proceedings: ICDE2011                                   
+Start Page: 1370                                 
+End Page: 1373                                     
+Year: 2011       
+================================                      
+Summary of publication:                                
+Proceedings : 0                                       
+Journal : 0                                      
+Article : 2                                        
+Book : 0                             
+Total Publication : 2                                                                                                                                                                         
+PL/SQL procedure successfully completed.
+
+SQL> EXECUTE print_publication('Andrew Yong Zheng Dao');
+Error: ORA-20001: The author does not exist !                                                                                                                                                 
+PL/SQL procedure successfully completed.
+
+SQL> SPOOL OFF

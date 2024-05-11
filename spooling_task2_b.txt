@@ -1,0 +1,28 @@
+SQL> @ C:\SQLfile\Assignment2\task2_b.sql;
+
+Procedure created.
+
+SQL> EXECUTE print_article('VLDBJ21_1');
+Pubid               Appear in Journal        Start Page     End Page       Title                                                                                                                                                                                                                                                              
+MullerTA12          VLDBJ21_1                1              23             Sorting networks on FPGAs                                                                                          
+GeorgouK12          VLDBJ21_1                25             50             Distributed similarity estimation using derived dimensions                                                         
+DeutchM12           VLDBJ21_1                51             68             Type inference and type checking for queries over execution traces                                                 
+CheeZLZL12          VLDBJ21_1                69             95             Continuous reverse k nearest neighbors queries in Euclidean space...                                               
+ZouCOZ12            VLDBJ21_1                97             120            Answering pattern match queries in large graph databases via graph...                                              
+HartmaKL12          VLDBJ21_1                121            144            Design by example for SQL table definitions with functional...                                                     
+GuravSDB12          VLDBJ21_1                145            165            Which sort orders are interesting                                                                                                                                                                                                                                                                                
+PL/SQL procedure successfully completed.
+
+SQL> EXECUTE print_article('ICDE2011');
+Pubid               Appear in Proceedings    Start Page     End Page       Title
+                                                                                                              
+Graefe11            ICDE2011                 1361           1361           Robust query processing                                                                                            
+GraefeK11           ICDE2011                 1370           1373           Modern B-tree techniques                                                                                                                                                                                                                                                                                         
+PL/SQL procedure successfully completed.
+
+SQL> EXECUTE print_article('ABCD1234');
+ABCD1234 do not exist!                                                                                                                                                                             
+Error!ORA-20001: Publication not found!                                                                                                                                                                                                                                                                                                                                                     
+PL/SQL procedure successfully completed.
+
+SQL> SPOOL OFF;
